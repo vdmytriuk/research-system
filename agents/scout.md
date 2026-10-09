@@ -27,6 +27,11 @@ best you can and list the gap in your return.
    another sub-question, write one line about it in your return under "Для інших
    скаутів", do not research it.
 3. For every source you use:
+   - Read it with `node scripts/fetch.mjs "<url>"`: it prints the page text itself.
+     WebFetch returns a model-written summary, not the page — use it only to find pages,
+     or when `fetch.mjs` is blocked (exit 2) or cannot read a PDF (exit 4). A quote copied
+     from a summary is not verbatim. Check every quote before you write it:
+     `node scripts/fetch.mjs "<url>" --find "<quote>"` must say `quote: found`.
    - `node scripts/source-id.mjs "<url>"` → gives the ID and path (batch several URLs in
      one Bash call). If the page exists, reuse it. If not, create it from
      `templates/source.md`.
@@ -46,9 +51,10 @@ best you can and list the gap in your return.
      quality or performance claims → C; forums, anonymous, undated → D. Self-reported
      benchmark numbers are the vendor's claim: `type: statistic`, confidence ≤ medium,
      say "самозаявлено" in the notes.
-   - Save a plain-text copy to `raw/<yyyy-mm-dd>-<slug>.md` only when the page is a
-     primary source that may disappear (reports, PDFs, official stats), with the exact
-     header from `raw/README.md` and the text as is. Never edit raw/.
+   - Save a plain-text copy to `raw/` only when the page is a primary source that may
+     disappear (reports, PDFs, official stats): `node scripts/fetch.mjs "<url>" --save <slug>`
+     writes `raw/<yyyy-mm-dd>-<slug>.md` once, with the header from `raw/README.md`.
+     Never edit raw/.
 4. For every claim worth keeping, write one evidence page from `templates/evidence.md`:
    `wiki/evidence/E-B###-<sq>-<nn>.md` (the brief ID without its hyphen, e.g.
    `E-B004-2-01`), numbering from 01 within your sub-question. If pages
@@ -63,6 +69,11 @@ best you can and list the gap in your return.
      "дослівна цитата недоступна" and set `confidence` no higher than medium.
    - A claim that a product or system lacks a capability requires having read its
      official documentation or product page; press and encyclopedias are not enough.
+   - A claim about a legal norm says when it applied. Name in `## Контекст` the
+     redaction you read (its date and the amending act) and set `date_of_info` to the
+     period that redaction covers. Never project the current redaction onto earlier years
+     («з 2022») without checking the redaction history (zakon.rada.gov.ua: the list of
+     amending acts and `/edYYYYMMDD` redactions).
 5. When two sources disagree, write both evidence pages and fill `contradicts:` on each.
 6. When a part of your sub-question has no findable answer, write one page with
    `type: absence`, `source: null`, claim "доказів <про що> не знайдено", and a

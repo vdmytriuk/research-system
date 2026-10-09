@@ -26,7 +26,8 @@ Optional: a domain, idea or brief ID to file the evidence against.
    the file. Spawn `critic` with `verify <E-IDs…> <today>` in the background. Tell the user in
    one line: source ID and grade, how many evidence pages, verification running. End
    the turn.
-5. Critic finished → fold the verified claims into the relevant topic pages and into
+5. Critic finished → apply its corrections to inexact and failed pages as in step 7 of
+   `playbooks/research.md` (`corrected:`), then fold the verified claims into the relevant topic pages and into
    the domain or idea page («Що знаємо» of the matching layer or workstream, tick the
    queue items they answer, close the matching «Потрібно від редактора» items, set
    `updated:`, add a `## Лог` line). Run `node scripts/lint.mjs --fix` and

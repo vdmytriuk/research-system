@@ -5,7 +5,7 @@ type: fact            # fact | statistic | estimate | opinion | anecdote | absen
 source: S-00000000    # null лише для type: absence
 source_grade: C       # A | B | C | D — копія з сторінки джерела
 confidence: medium    # high | medium | low
-date_of_info: ""      # до якого періоду стосується інформація, напр. 2025-Q3
+date_of_info: ""      # до якого періоду стосується інформація, напр. 2025-Q3; для норми закону — період дії цитованої редакції
 brief: B-000
 subquestion: 0
 domain: null          # D-### або null; скауту досить заповнити brief
@@ -14,6 +14,7 @@ contradicts: []       # [E-...]
 created: 0000-00-00
 verified: null        # дата перевірки критиком (verify)
 verification: null    # ok | inexact | failed | unreachable
+corrected: null       # дата, коли лід застосував формулювання критика (research, крок 7)
 ---
 
 # {{claim}}
@@ -31,7 +32,9 @@ verification: null    # ok | inexact | failed | unreachable
 Які запити й джерела перевірено, коли; що саме не знайдено.
 
 ## Верифікація
-_(заповнює критик у режимі verify: дата — вердикт: що каже джерело; що виправити)_
+_(заповнює критик у режимі verify: дата — вердикт: що каже джерело. Для inexact і failed окремий рядок
+«Коректне формулювання: «…»»; якщо знайдено дослівний текст замість заглушки — «Дослівна цитата: «…»».
+Лід застосовує їх на кроці 7 і ставить `corrected:`)_
 
 ## Нотатки
 Чому саме така впевненість. З чим суперечить.

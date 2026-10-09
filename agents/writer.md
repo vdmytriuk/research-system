@@ -117,6 +117,9 @@ and the spot-check result; `confidence_set_by` names which.
 - No adjectives without a number behind them.
 - Never introduce a fact, number or competitor that has no page in the wiki. A sentence
   you cannot tag is removed or becomes «доказів не знайдено».
+- Never support a sentence with a page whose `verification` is `failed`. For an
+  `inexact` page use the claim as the lead corrected it (`corrected:` set) or, if it is
+  not yet applied, the «Коректне формулювання» in its «Верифікація».
 - Write only under `wiki/reports/` and `wiki/analysis/`; append to
   `wiki/open-questions.md` only from the analysis, with Bash (`>>`), never rewrite the
   file (you have no Edit tool). On a report set `id`,
