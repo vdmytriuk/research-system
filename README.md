@@ -8,6 +8,7 @@ Code — основне середовище, `.claude/` лише адаптер
 ## Що потрібно
 - Claude Code (особистий акаунт Pro/Max, не корпоративний)
 - Node.js 20+ (для скриптів `scripts/*.mjs`, без залежностей)
+- `pdftotext` (poppler) — необов'язково: без нього `scripts/fetch.mjs` не читає PDF
 - git; репозиторій в **особистому** GitHub
 
 ## Старт
@@ -15,14 +16,17 @@ Code — основне середовище, `.claude/` лише адаптер
 git clone <repo> && cd research-system && claude
 ```
 У Claude Code:
-1. Заповніть `docs/context.md` (команда, ресурси, обмеження) — від цього залежить
-   критерій «відповідність» у рубриці.
-2. `/explore "<напрям>"` → три питання про мотив і межі → вступний brief → **гейт 1** →
+1. Заповніть `docs/context.md` за `templates/context.md` (організація, активи, ресурси,
+   обмеження, припущення) і поставте `updated:` — від цього залежить критерій
+   «відповідність» у рубриці; перед кожним новим напрямом система спитає, чи він актуальний.
+2. Не знаєте, з якого напряму почати? `/screen "що нам досліджувати"` → кандидати з вашого
+   контексту → один brief на всіх → таблиця порівняння → ви вибираєте, який відкрити.
+3. `/explore "<напрям>"` → підтвердити контекст → три питання про мотив і межі → вступний brief → **гейт 1** →
    прогін у фоні з двома зупинками → конспект на 2–4 сторінки → **зупинка**: карта.
-3. `/explore D-001` → наступні brief'и на вибір → після карти критик і звіт стану →
+4. `/explore D-001` → наступні brief'и на вибір → після карти критик і звіт стану →
    **ви вибираєте фокус** → глибші brief'и → **кандидати** з доказів → `/decide D-001
    promote n` → ідея.
-4. `/explore I-001` → brief'и по ідеї → «синтез» → аналіз, критика, фінальний звіт →
+5. `/explore I-001` → brief'и по ідеї → «синтез» → аналіз, критика, фінальний звіт →
    **гейт 3** → `/decide I-001 advance|park|kill`.
 
 Поки агенти працюють, сесія вільна. `/review` показує, що чекає на вас, і відкриває
@@ -33,9 +37,10 @@ git clone <repo> && cd research-system && claude
 ```
 AGENTS.md    правила системи (CLAUDE.md лише імпортує його)
 agents/      ролі: scout, critic, writer
-playbooks/   процедури: explore, research, checkpoint, ingest, decide, review
+playbooks/   процедури: screen, explore, research, checkpoint, ingest, decide, review
 templates/   шаблони сторінок
-scripts/     lint, index, status, next-id, source-id, now, hooks/, tests/ (Node, без залежностей)
+scripts/     lint, index, status, next-id, source-id, now, fetch (текст сторінки й перевірка цитати),
+             digest-table (таблиця доказів brief'у), hooks/, tests/ (Node, без залежностей)
 docs/        концепція, workflow, контекст, рубрика, decision log, специфікації
 wiki/        domains · ideas · briefs · evidence · sources · topics · critique · analysis · reports
 raw/         незмінні копії джерел (YYYY-MM-DD-slug.md)
