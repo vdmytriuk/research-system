@@ -13,7 +13,9 @@ person running the system reads it directly. Roles live in `agents/`, procedures
 
 Read first, every session: `docs/vision.md`, `docs/context.md`, `docs/rubric.md`,
 `wiki/index.md`, `wiki/open-questions.md`, the domain or idea page the task belongs
-to, and the topic pages under `wiki/topics/` that touch it.
+to, and the topic pages under `wiki/topics/` that touch it. Before a new domain or a
+screening the editor confirms that `docs/context.md` describes the organisation the
+research serves (`playbooks/explore.md` step 0, `playbooks/screen.md` step 1).
 
 ## Language
 - Instructions, agent prompts, playbooks, frontmatter keys: English.
@@ -37,7 +39,10 @@ to, and the topic pages under `wiki/topics/` that touch it.
    source is written as `type: estimate` with the method stated. No exceptions for
    "well-known" facts. Every evidence page carrying a number is checked against its
    source by the critic (mode verify) before the stop after collection; the verdict
-   lives on the page (`verification:`).
+   lives on the page (`verification:`). Pages are read with `node scripts/fetch.mjs`
+   (the page text, not a summary). An `inexact` or `failed` verdict carries the
+   critic's «Коректне формулювання»; the lead applies it at the tail and sets
+   `corrected:` (research step 7), so no reader meets a claim the critic rejected.
 3. **raw/ is immutable.** Never edit or delete anything under `raw/`. Saved copies of
    sources are written there once, by the ingest playbook or by scouts.
 4. **Critique before report.** A report of type `domain` or `final` may not be written
@@ -52,7 +57,9 @@ to, and the topic pages under `wiki/topics/` that touch it.
    has at least one evidence page about the problem and one about who pays. Before
    that, when the editor asks "what idea", the answer is the map and the next question.
 7. **Contradictions are data.** When sources disagree, keep both evidence pages and
-   link them with `contradicts:`. Never average, never pick one silently.
+   link them with `contradicts:`. Never average, never pick one silently. When a page
+   of a newer brief contradicts an already verified page, that page goes back to the
+   critic before the stop after collection (research step 6); lint flags it.
 8. **Quotes ≤ 30 words.** Paraphrase; the source page carries the link.
 9. **Commit after every step** (`<stage>(<id>): <summary>`). **Push at gates**: at the
    end of `/review`, `/decide`, and after gate 2 of a run, at a domain phase stop, or when the editor asks. Push
@@ -68,7 +75,7 @@ to, and the topic pages under `wiki/topics/` that touch it.
 |---|---|---|---|
 | Domain | `wiki/domains/D-###-<slug>.md` | `D-001` | `templates/domain.md` |
 | Idea | `wiki/ideas/I-###-<slug>.md` | `I-001` | `templates/idea.md` |
-| Brief | `wiki/briefs/B-###-<slug>.md` | `B-001` | `templates/brief.md` |
+| Brief | `wiki/briefs/B-###-<slug>.md` | `B-001` | `templates/brief.md`, `templates/brief-screen.md` |
 | Evidence | `wiki/evidence/E-<prefix>-<nn>.md` | `E-B001-2-03`, `E-D001-C-01`, `E-ING-20261006-01` | `templates/evidence.md` |
 | Source | `wiki/sources/S-<hash8>.md` | `node scripts/source-id.mjs <url>` | `templates/source.md` |
 | Topic | `wiki/topics/T-<slug>.md` | `T-local-llm-hardware` | `templates/topic.md` |
@@ -85,9 +92,11 @@ to, and the topic pages under `wiki/topics/` that touch it.
   `target_decision`; no phases. State: `stage` (`active | validation | parked | killed`),
   `checkpoint`.
 - A **brief** names its `domain:` and/or `idea:` and its `layer:` (a domain layer or an
-  idea workstream). Run state lives on it: `status` (`draft | approved | running |
-  collected`), `run_stage` (`queued | scouts | verify | checked | digest | null`;
-  `checked` is the stop after collection), `run_started`, `run_finished`, `reviewed`
+  idea workstream). A **screening** brief (`layer: screen`) names neither: it compares
+  candidate directions so the editor can choose which one to open (`playbooks/screen.md`).
+  Run state lives on it: `status` (`draft | approved | running | collected`),
+  `run_stage` (`queued | scouts | verify | checked | digest | null`; `checked` is the stop
+  after collection), `run_started`, `run_finished`, `reviewed`
   (gate 2 passed), and one line per transition in `## Журнал прогону`. Timestamps:
   `node scripts/now.mjs`.
 - Sequential IDs (D, I, B, R): `node scripts/next-id.mjs <prefix>`. Ingest evidence:
@@ -147,6 +156,7 @@ plain words as readily as from its command.
 
 | Playbook | Command | Plain words that trigger it |
 |---|---|---|
+| `playbooks/screen.md` | `/screen` | "що нам досліджувати", "порівняй напрями …" |
 | `playbooks/explore.md` | `/explore` | "вивчаємо напрям …", "де ми по D-001", "що далі по ідеї" |
 | `playbooks/research.md` | `/research` | "дослідь питання …", "продовж B-007" |
 | `playbooks/decide.md` | `/decide` | the command, or a choice at a stop |
@@ -178,7 +188,8 @@ agents and completion notifications exist only in Claude Code; elsewhere the sam
 steps run one after another, and the lint rule replaces the hook.
 
 ## What you never do
-- Choose which idea wins, or propose candidates before the focus stop. You score
+- Choose which direction a screening opens or which idea wins, or propose candidates
+  before the focus stop. You score
   against `docs/rubric.md` with justification; the user decides.
 - Hold the session waiting for a subagent, or let a chain run past a stop without the
   user's yes.

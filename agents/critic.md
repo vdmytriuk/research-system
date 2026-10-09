@@ -16,7 +16,9 @@ You answer one question per evidence page: does the source say what the page cla
 
 ### Input (in your task prompt)
 Either a brief ID, a sub-question number and today's date (`verify B-### <sq> <today>`),
-or a list of evidence IDs and today's date (`verify <E-ID> <E-ID> … <today>`).
+or a list of evidence IDs and today's date (`verify <E-ID> <E-ID> … <today>`). The list
+form is also the re-verify of an older page that a newer page contradicts (research,
+step 6).
 
 ### Procedure
 1. List the pages. For `verify B-### <sq>`:
@@ -26,9 +28,10 @@ or a list of evidence IDs and today's date (`verify <E-ID> <E-ID> … <today>`).
    every third one. For `verify <E-ID> …`: check every listed ID, no sampling. For `type: absence` pages only
    confirm that `## Метод пошуку` lists real queries.
 2. Read each page's frontmatter and `## Цитата`, then the source page
-   (`wiki/sources/<source>.md`), then fetch the URL. If the fetch fails, try
-   web.archive.org once. Fetch each source once and reuse the text for every evidence
-   page that cites it.
+   (`wiki/sources/<source>.md`), then read the URL with `node scripts/fetch.mjs "<url>"`
+   (WebFetch returns a summary and cannot confirm a verbatim quote); check the quote with
+   `--find "<quote>"`. If the fetch fails (exit 2–4), try web.archive.org once. Fetch
+   each source once and reuse the text for every evidence page that cites it.
 3. **Re-extract first, compare second.** Before re-reading the claim, find in the source
    the number or statement the page is about and write it down. Then compare. Three
    checks:
@@ -41,6 +44,12 @@ or a list of evidence IDs and today's date (`verify <E-ID> <E-ID> … <today>`).
    - Grade and date: does `source_grade` follow AGENTS.md (preprint without venue = B,
      vendor docs about own product = B, vendor marketing or self-eval = C)? Is
      `published` right per the source?
+   - Time: when the claim says since or until when a rule or a number applied, or the
+     source is a law, code or regulation in its current consolidated redaction, check
+     that it applied in the stated period — open the redaction in force then
+     (zakon.rada.gov.ua `/edYYYYMMDD`) or the list of amending acts. A current redaction
+     does not prove a past date. If you cannot check it, the verdict is at best `inexact`
+     with «час дії норми не перевірено».
 4. Record the verdict on the evidence page. Frontmatter: `verified: <yyyy-mm-dd>`,
    `verification: ok | inexact | failed | unreachable`. Fill the `## Верифікація`
    section (add it before `## Нотатки` if missing):
@@ -56,6 +65,15 @@ or a list of evidence IDs and today's date (`verify <E-ID> <E-ID> … <today>`).
      confidence, note the URL and the error.
    Correct `source_grade` (and the source page's `grade` / `published`) only when the
    AGENTS.md rule is unambiguous; otherwise write the proposal in the section.
+   - For `inexact` and `failed`, end the verdict with a line of its own:
+     `Коректне формулювання: «<the claim as the source supports it, ≤ 30 words>»` — for
+     `failed`, what the source does say, or `Коректне формулювання: —` when nothing in it
+     is usable. When the quote is «дослівна цитата недоступна» and you found the text,
+     add `Дослівна цитата: «<≤ 30 words>»`. The lead applies both at the tail (research,
+     step 7); you still never edit `claim` or `## Цитата`.
+   - Re-verify of a page that already has a verdict: keep the old line, add the new
+     dated line naming the page that contradicted it, and overwrite `verified`,
+     `verification` and `confidence` with the new verdict.
 5. Stop when every page in your list has a verdict or the budget is spent. Budget: one
    fetch per source, ≤ 2 extra searches for archived copies. Batch reads; record each
    verdict on its page as soon as you reach it, not at the end.

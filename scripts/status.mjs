@@ -2,7 +2,7 @@
 // Pipeline state for /review and /explore. `--waiting` prints only what waits on the user.
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { loadWiki, under, ROOT } from "./_lib.mjs";
+import { loadWiki, under, ROOT, screenDecided } from "./_lib.mjs";
 
 const onlyWaiting = process.argv.includes("--waiting");
 const pages = loadWiki();
@@ -30,6 +30,7 @@ for (const b of briefs) {
   const since = String(b.fm.run_finished ?? b.fm.run_started ?? "?").slice(0, 10);
   waiting.push(`gate 2: ${b.fm.id}${tag(b)} collected ${since} → /review ${b.fm.id}`);
 }
+for (const b of briefs) if (b.fm.layer === "screen" && b.fm.reviewed && !screenDecided(b)) waiting.push(`screening decision: ${b.fm.id} compared, which direction to open → /review ${b.fm.id}`);
 for (const d of domains) if (d.fm.checkpoint === "ready") waiting.push(`phase stop: ${d.fm.id} (${d.fm.phase}) → /review ${d.fm.id}`);
 for (const i of ideas) if (i.fm.checkpoint === "ready") waiting.push(`gate 3: ${i.fm.id} → /review ${i.fm.id}`);
 const oq = join(ROOT, "wiki", "open-questions.md");
@@ -100,6 +101,7 @@ function next(b) {
   if (status === "approved") return run_stage === "queued" ? "queued" : `start or resume: /research ${id}`;
   if (run_stage === "checked") return `/review ${id}`;
   if (status === "running") return "running";
+  if (status === "collected" && reviewed != null && b.fm.layer === "screen") return screenDecided(b) ? "decided" : `screening decision: /review ${id}`;
   if (status === "collected") return reviewed == null ? `/review ${id}` : "reviewed";
   return "—";
 }

@@ -77,7 +77,7 @@ export const brief = (id, extra = {}, body = "") => [`wiki/briefs/${id}-x.md`, p
 export const evidence = (id, extra = {}) => [`wiki/evidence/${id}.md`, page({
   id, claim: "Claim with 10 units", type: "fact", source: "S-00000000", source_grade: "B",
   confidence: "low", date_of_info: day(0), brief: null, domain: null, idea: null,
-  contradicts: [], created: day(0), verified: null, verification: null, ...extra,
+  contradicts: [], created: day(0), verified: null, verification: null, corrected: null, ...extra,
 }, "\n## Цитата\n> quote\n")];
 
 export const source = (id = "S-00000000", extra = {}) => [`wiki/sources/${id}.md`, page({

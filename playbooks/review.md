@@ -25,6 +25,8 @@ AGENTS.md.
 - `status: draft` → gate 1: step 3 of `playbooks/research.md`.
 - `run_stage: checked` → the stop after collection: step 6 of `playbooks/research.md`.
 - `status: collected`, `reviewed` null, `run_stage` null → gate 2: steps 8–9 of research.
+- `layer: screen`, `reviewed` set and «Рішення відбору» empty → the screening decision:
+  step 5 of `playbooks/screen.md`.
 - Already `reviewed` → say when, and ask whether to open it again.
 - Any other state → say which (`node scripts/status.mjs`) and stop.
 

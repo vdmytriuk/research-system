@@ -12,6 +12,13 @@ user reads is Ukrainian. Common rules: AGENTS.md. Candidates appear only at the 
 after the focus phase (rule 6).
 
 ## New domain (`/explore "<title>"`)
+0. Read `docs/context.md` and show the editor in ≤ 5 lines whom it describes
+   (organisation, assets, hard constraints) and its `updated:` date; ask: актуальний /
+   оновити. The rubric's «відповідність активам» is scored against this file, so a
+   domain never starts on a context nobody confirmed. On «оновити», update it with the
+   editor from `templates/context.md`, set `updated:`, commit `docs(context): <what>`.
+   Skip this step when the domain comes from a screening decision made today
+   (`/decide B-### open`): the screening already confirmed the context.
 1. Ask up to three questions with AskUserQuestion: why this domain (their words); what
    is in and out of scope (geography, time horizon, adjacent fields); a rough target
    date for reaching candidates (8, 12 or 16 weeks from today, or their own).

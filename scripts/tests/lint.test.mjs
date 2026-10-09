@@ -274,3 +274,81 @@ test("--fix puts every back-link on a page two others contradict", () => {
   run("lint.mjs", root, ["--fix"]);
   assert.match(readFileSync(join(root, "wiki/evidence/E-B001-1-03.md"), "utf8"), /^contradicts: \[E-B001-1-01, E-B001-1-02\]$/m);
 });
+
+// --- screening ------------------------------------------------------------------
+
+test("accepts a screening brief without domain or idea, rejects one under a domain", () => {
+  assert.deepEqual(errors(lint(brief("B-001", { layer: "screen" })).out), []);
+  const { out } = lint(domain("D-001"), brief("B-001", { domain: "D-001", layer: "screen" }));
+  assert.ok(hasError(out, 'layer "screen" is only for a brief without domain or idea'), out);
+});
+
+test("warns about a reviewed screening until its decision is recorded", () => {
+  const reviewed = { layer: "screen", status: "collected", reviewed: day(0) };
+  const open = lint(brief("B-001", reviewed, "\n## Рішення відбору\n_(заповнює /decide B-### open <n> | none)_\n"));
+  assert.ok(hasWarning(open.out, "screening reviewed without a decision: /decide B-001"), open.out);
+  const done = lint(brief("B-001", reviewed, "\n## Рішення відбору\n2026-10-09 — відкрити напрям 2 як D-001\n"));
+  assert.ok(!hasWarning(done.out, "screening reviewed"), done.out);
+});
+
+// --- critic corrections -----------------------------------------------------------
+
+test("warns when an inexact verdict on a collected brief is not applied", () => {
+  const { out } = lint(brief("B-001", { status: "collected" }), source(),
+    evidence("E-B001-1-01", { brief: "B-001", verified: day(0), verification: "inexact" }));
+  assert.ok(hasWarning(out, "verdict inexact not applied"), out);
+});
+
+test("an applied correction silences the warning until a newer verdict arrives", () => {
+  const applied = lint(brief("B-001", { status: "collected" }), source(),
+    evidence("E-B001-1-01", { brief: "B-001", verified: day(-1), verification: "inexact", corrected: day(0) }));
+  assert.ok(!hasWarning(applied.out, "not applied"), applied.out);
+  const stale = lint(brief("B-001", { status: "collected" }), source(),
+    evidence("E-B001-1-01", { brief: "B-001", verified: day(0), verification: "failed", corrected: day(-2) }));
+  assert.ok(hasWarning(stale.out, "is newer than the correction"), stale.out);
+});
+
+test("does not ask for corrections while the brief is still running", () => {
+  const { out } = lint(brief("B-001", { status: "running", run_stage: "verify" }), source(),
+    evidence("E-B001-1-01", { brief: "B-001", verified: day(0), verification: "inexact" }));
+  assert.ok(!hasWarning(out, "not applied"), out);
+});
+
+// --- re-verify after a contradiction ----------------------------------------------
+
+test("asks to re-verify a page that a newer brief contradicts", () => {
+  const { out } = lint(brief("B-001"), brief("B-002"), source(),
+    evidence("E-B001-2-01", { brief: "B-001", verified: day(-1), verification: "ok" }),
+    evidence("E-B002-4-24", { brief: "B-002", created: day(0), contradicts: ["E-B001-2-01"] }));
+  assert.ok(hasWarning(out, "E-B001-2-01.md: verified"), out);
+  assert.ok(hasWarning(out, "re-verify (critic verify E-B001-2-01)"), out);
+});
+
+test("no re-verify within one brief or once the verdict names the contradicting page", () => {
+  const same = lint(brief("B-001"), source(),
+    evidence("E-B001-1-01", { brief: "B-001", verified: day(0), verification: "ok" }),
+    evidence("E-B001-1-02", { brief: "B-001", created: day(0), contradicts: ["E-B001-1-01"] }));
+  assert.ok(!hasWarning(same.out, "re-verify"), same.out);
+  const [rel, text] = evidence("E-B001-2-01", { brief: "B-001", verified: day(0), verification: "inexact" });
+  const done = lint(brief("B-001"), brief("B-002"), source(),
+    [rel, text + "\n## Верифікація\n2026-10-09 — inexact: перевірено після E-B002-4-24.\n"],
+    evidence("E-B002-4-24", { brief: "B-002", created: day(0), contradicts: ["E-B001-2-01"] }));
+  assert.ok(!hasWarning(done.out, "re-verify"), done.out);
+});
+
+// --- docs/context.md --------------------------------------------------------------
+
+test("asks to confirm docs/context.md when it has no date or is stale", () => {
+  const ctx = fm => ["docs/context.md", `---\n${fm}\n---\n# Наш контекст\n`];
+  assert.ok(hasWarning(lint(["docs/context.md", "# Наш контекст\n"]).out, "docs/context.md: no `updated:` date"));
+  assert.ok(hasWarning(lint(ctx(`updated: ${day(-91)}`)).out, "not confirmed for 90+ days"));
+  assert.ok(!hasWarning(lint(ctx(`updated: ${day(-5)}`)).out, "docs/context.md"));
+});
+
+test("a contradicting id mentioned only in the notes does not count as a re-verify", () => {
+  const [rel, text] = evidence("E-B001-2-01", { brief: "B-001", verified: day(-1), verification: "ok" });
+  const { out } = lint(brief("B-001"), brief("B-002"), source(),
+    [rel, text + "\n## Нотатки\nСуперечить E-B002-4-24.\n"],
+    evidence("E-B002-4-24", { brief: "B-002", created: day(0), contradicts: ["E-B001-2-01"] }));
+  assert.ok(hasWarning(out, "re-verify (critic verify E-B001-2-01)"), out);
+});

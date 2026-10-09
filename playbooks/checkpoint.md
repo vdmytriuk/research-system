@@ -30,7 +30,8 @@ AskUserQuestion if it was not given. The editor never has to type the command.
 2. Critic finished (or the verify below finished) → if the critic wrote new
    `E-D###-C-*` pages (e.g. `E-D001-C-01`) and any of them has a digit in `claim` and
    `verification: null`, spawn `critic` with `verify <those IDs> <today>` in the
-   background first, log it, and spawn the writer when that verify finishes;
+   background first, log it, and spawn the writer when that verify finishes (after
+   applying its corrections as in step 7 of `playbooks/research.md`);
    otherwise spawn the writer at once. The writer gets `report D-### R-###`. One
    sentence to the user.
 3. Writer finished → lint --fix, index, commit `report(R-###): domain D-###`,

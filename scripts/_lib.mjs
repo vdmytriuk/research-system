@@ -75,3 +75,22 @@ export function normaliseUrl(u) {
 
 // Pages of one wiki folder that have frontmatter, e.g. under(pages, "domains").
 export const under = (pages, dir) => pages.filter(p => p.rel.startsWith(`wiki/${dir}/`) && p.fm);
+
+// Text of a `## <title>` section of a page body, up to the next `## ` heading ("" if absent).
+export function section(body, title) {
+  const lines = body.split("\n");
+  const start = lines.findIndex(l => l.trim() === `## ${title}`);
+  if (start < 0) return "";
+  const out = [];
+  for (const l of lines.slice(start + 1)) { if (/^## /.test(l)) break; out.push(l); }
+  return out.join("\n").trim();
+}
+
+// A screening brief has a decision once «Рішення відбору» holds more than its template placeholder.
+export const screenDecided = p => {
+  const s = section(p.body ?? "", "Рішення відбору");
+  return s !== "" && !/^_\(/.test(s);
+};
+
+// The critic's proposed wording on an inexact or failed page («Коректне формулювання: «…»»).
+export const correctionOf = body => /Коректне формулювання:\s*(«[^\n]*»|—)/.exec(section(body, "Верифікація"))?.[1] ?? null;

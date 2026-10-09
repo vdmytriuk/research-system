@@ -1,7 +1,7 @@
 ---
 name: decide
-description: Record a decision — on an idea (advance, park, kill) or on a domain (focus, promote, drop, pause, continue, close) — in the decision log and on the page. The only way docs/decision-log.md is edited.
-argument-hint: 'I-### advance|park|kill "<reason>" | D-### focus|promote|drop|pause|continue|close [<n> | "<text>"] "<reason>"'
+description: Record a decision — on an idea (advance, park, kill), on a domain (focus, promote, drop, pause, continue, close) or on a screening (open, none) — in the decision log and on the page. The only way docs/decision-log.md is edited.
+argument-hint: 'I-### advance|park|kill "<reason>" | D-### focus|promote|drop|pause|continue|close [<n> | "<text>"] "<reason>" | B-### open <n>|none "<reason>"'
 disable-model-invocation: true
 ---
 
@@ -58,3 +58,19 @@ then sets `updated:` and a `## Лог` line on the domain page, runs
 `decide(D-###): <action>` (the page, the log, `candidates:` and `wiki/index.md`
 together), and does `git push`. Confirm in one line; after a promote add the next step in words
 (the idea's quick check through `/explore I-###`).
+
+## Screening: `B-### open <n> | none "<reason>"`
+For a brief with `layer: screen` after its comparison (`playbooks/screen.md`, step 5).
+1. Append to `docs/decision-log.md`:
+   ```
+   ## <yyyy-mm-dd> · B-### · <open|none>
+   - Хто: <the editor>
+   - Рішення: відкрити напрям «<candidate n>» — <reason, the editor's words> | жоден — <reason>
+   - На основі: [[B-###]] (порівняння напрямів); найсильніший інший кандидат: <one line>
+   - Що б змінило рішення: <from the brief's «Що змінило б рішення»>
+   ```
+2. Write «Рішення відбору» in the brief: date, the choice, the reason, and for `open` the
+   D-ID it creates. Commit `decide(B-###): <open n | none>`.
+3. `open` → follow «New domain» of `playbooks/explore.md` for the candidate's title. Its
+   «Чому цей напрям» is the reason with a link to [[B-###]]; ask only the questions the
+   screening did not answer; seed layer 1 from the topics the screening wrote.
