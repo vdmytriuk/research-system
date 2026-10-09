@@ -2,8 +2,9 @@
 // Wiki integrity check. Exit 1 on errors. Warnings never fail.
 // `--fix` first rewrites derived fields (briefs / candidates / reports lists on domains
 // and ideas, stale topics, contradicts back-links), then checks the result.
-import { writeFileSync } from "node:fs";
-import { loadWiki, normaliseUrl, under } from "./_lib.mjs";
+import { writeFileSync, existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { ROOT, loadWiki, normaliseUrl, under, parseFrontmatter, screenDecided, section } from "./_lib.mjs";
 
 const FIX = process.argv.includes("--fix");
 const DOMAIN_STATUS = ["active", "paused", "closed"];
@@ -158,7 +159,10 @@ for (const p of pages) {
     if (p.fm.run_stage != null && !RUN_STAGE.includes(p.fm.run_stage)) err(p, `invalid run_stage "${p.fm.run_stage}"`);
     if (p.fm.status === "running" && p.fm.run_stage == null) err(p, "running brief without run_stage");
     if (p.fm.status !== "draft" && !p.fm.author) err(p, "brief past gate 1 without author");
-    if (p.fm.layer != null) {
+    if (p.fm.layer === "screen") {
+      if (p.fm.domain != null || p.fm.idea != null) err(p, 'layer "screen" is only for a brief without domain or idea');
+      else if (p.fm.reviewed && !screenDecided(p)) warn(p, `screening reviewed without a decision: /decide ${p.fm.id} open <n> | none`);
+    } else if (p.fm.layer != null) {
       const allowed = p.fm.idea != null ? WORKSTREAMS : LAYERS;
       if (!allowed.includes(p.fm.layer)) err(p, `invalid layer "${p.fm.layer}" for ${p.fm.idea != null ? "an idea" : "a domain"} brief`);
     } else if (p.fm.domain != null || p.fm.idea != null) warn(p, "brief under a domain or idea without layer");
@@ -175,6 +179,7 @@ for (const p of pages) {
     if (!E_TYPES.includes(p.fm.type)) err(p, `invalid type "${p.fm.type}"`);
     if (!CONF.includes(p.fm.confidence)) err(p, `invalid confidence "${p.fm.confidence}"`);
     if (p.fm.verification != null && !VERIF.includes(p.fm.verification)) err(p, `invalid verification "${p.fm.verification}"`);
+    if (p.fm.corrected != null && Number.isNaN(date(p.fm.corrected))) err(p, `unreadable date corrected "${p.fm.corrected}"`);
     if (p.fm.type === "estimate" && !/##\s*Метод/.test(p.body)) warn(p, "estimate without ## Метод");
     if (typeof p.fm.claim === "string" && p.fm.claim.split(/\s+/).length > 30) warn(p, "claim longer than 30 words");
     if (!p.fm.date_of_info) warn(p, "missing date_of_info");
@@ -250,6 +255,24 @@ for (const [bid, st] of briefStatus) {
   if (b && evidence.some(e => String(e.fm.id).startsWith(prefix)) && !topicText.includes("[[" + prefix))
     warn(b, `collected brief not folded into any topic page (no [[${prefix}…]] under wiki/topics/)`);
 }
+// Corrections: an inexact or failed verdict is applied by the lead at the tail (research step 7).
+for (const p of evidence) {
+  if (!["inexact", "failed"].includes(p.fm.verification) || briefStatus.get(p.fm.brief) !== "collected") continue;
+  if (p.fm.corrected == null) warn(p, `verdict ${p.fm.verification} not applied: set claim to the critic's wording and corrected: <date> (research step 7)`);
+  else if (date(p.fm.corrected) < date(p.fm.verified)) warn(p, `verdict of ${p.fm.verified} is newer than the correction of ${p.fm.corrected}: apply it again (research step 7)`);
+}
+// Re-verify: a verdict given before a page from another brief contradicted it, and not revisited since.
+const evidenceById = new Map(evidence.map(e => [e.fm.id, e]));
+for (const p of evidence) {
+  if (p.fm.verification == null || !p.fm.verified) continue;
+  const others = new Set([...(p.fm.contradicts ?? []), ...evidence.filter(e => (e.fm.contradicts ?? []).includes(p.fm.id)).map(e => e.fm.id)]);
+  for (const oid of others) {
+    const o = evidenceById.get(oid);
+    if (!o || o.fm.brief === p.fm.brief || !o.fm.created) continue;
+    if (date(o.fm.created) >= date(p.fm.verified) && !section(p.body, "Верифікація").includes(oid))
+      warn(p, `verified ${p.fm.verified} before ${oid} contradicted it: re-verify (critic verify ${p.fm.id}) and name ${oid} in the new verdict`);
+  }
+}
 for (const p of evidence) {
   if (briefStatus.get(p.fm.brief) === "collected" && p.fm.type !== "absence" && /\d/.test(String(p.fm.claim)) && p.fm.verification == null) warn(p, "numeric claim not verified");
   if (typeof p.fm.source === "string" && blockedSources.has(p.fm.source)) warn(p, `rests on a blocked source ${p.fm.source}`);
@@ -257,6 +280,16 @@ for (const p of evidence) {
     const other = byId.get(c);
     if (other && !(other.fm.contradicts ?? []).includes(p.fm.id)) warn(p, `contradicts ${c} but ${c} does not link back (lint --fix adds it)`);
   }
+}
+
+// docs/context.md is read before every task; it must say whom it describes and when it was confirmed.
+const contextPath = join(ROOT, "docs", "context.md");
+if (existsSync(contextPath)) {
+  const ctx = { rel: "docs/context.md" };
+  const { fm } = parseFrontmatter(readFileSync(contextPath, "utf8"));
+  if (!fm?.updated) warn(ctx, "no `updated:` date: confirm it describes the organisation the research serves (templates/context.md)");
+  else if (Number.isNaN(date(fm.updated))) err(ctx, `unreadable date updated "${fm.updated}"`);
+  else if (Date.now() - date(fm.updated) > 90 * DAY) warn(ctx, "not confirmed for 90+ days: review it with the editor before a new domain or screening");
 }
 
 for (const f of fixes) console.log("FIXED   " + f);

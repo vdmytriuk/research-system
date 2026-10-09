@@ -70,3 +70,13 @@ test("prints the first open questions", () => {
   const { out } = waiting(["wiki/open-questions.md", "# Open\n\n- [ ] D-001: who pays?\n- [x] closed\n"]);
   assert.match(out, /questions \(1\):\n- \[ \] D-001: who pays\?/);
 });
+
+test("a reviewed screening waits for the editor's decision", () => {
+  const screen = { layer: "screen", status: "collected", reviewed: day(0) };
+  const open = status(brief("B-001", screen, "\n## Рішення відбору\n_(заповнює /decide B-### open <n> | none)_\n"));
+  assert.match(open.out, /screening decision: B-001 compared, which direction to open → \/review B-001/);
+  assert.match(open.out, /B-001 \[collected\] .* → next: screening decision: \/review B-001/);
+  const done = status(brief("B-001", screen, "\n## Рішення відбору\n2026-10-09 — відкрити напрям 2\n"));
+  assert.doesNotMatch(done.out, /screening decision/);
+  assert.match(done.out, /→ next: decided/);
+});
